@@ -404,46 +404,54 @@ local function notify(results, jobId)
 
     -- ── MONTA EMBED ─────────────────────────────────────
     local total = 0
-    for _, r in ipairs(results) do total = total + r.value end
+for _, r in ipairs(results) do total = total + r.value end
 
-    local listLines = ""
-    local count = 0
-    for _, r in ipairs(results) do
-        if count>=6 then break end
-        local line = "1x "..getMutPfx(r.mutation)..r.name.." ("..r.gen..")"
-        if r.inDuel then line=line.." ⚔️" end
-        listLines = listLines..line.."\n"
-        count = count + 1
-    end
-    if #results>6 then listLines=listLines.."+ "..(#results-6).." mais..." end
+local listLines = ""
+local count = 0
+for _, r in ipairs(results) do
+    if count >= 6 then break end
+    local line = "1x "..getMutPfx(r.mutation)..r.name.." ("..r.gen..")"
+    if r.inDuel then line = line.." ⚔️" end
+    listLines = listLines..line.."\n"
+    count = count + 1
+end
+if #results > 6 then
+    listLines = listLines.."+ "..(#results - 6).." mais..."
+end
 
-    local imageUrl = getBrainrotImage(best.name)
-    local joinUrl  = ("roblox://experiences/start?placeId=%d&gameInstanceId=%s"):format(GAME_ID, jobId)
+local imageUrl = getBrainrotImage(best.name)
+local joinUrl  = ("https://www.roblox.com/games/start?placeId=%d&gameInstanceId=%s"):format(GAME_ID, jobId)
 
-    local color = best.value>=1e9 and 0xFF0000 or best.value>=500e6 and 0xFF6600 or EMBED_COLOR
+local color = best.value >= 1e9 and 0xFF0000
+           or best.value >= 500e6 and 0xFF6600
+           or EMBED_COLOR
 
-    local embed = {
-        title       = "🎯 "..getMutPfx(best.mutation)..best.name.." · "..fmtV(best.value).."/s",
-        description = "**Brainrots encontrados:**\n```"..listLines.."```"
-                    ..(best.inDuel and "\n⚔️ **Dono em Duel!**" or ""),
-        color       = color,
-        thumbnail   = imageUrl and {url=imageUrl} or nil,
-        fields      = {
-            {name="Players",    value=tostring(#Players:GetPlayers()).."/8", inline=true},
-            {name="Owner",      value=tostring(best.ownerName),              inline=true},
-            {name="Total Gen",  value="$"..fmtV(total).."/s",               inline=true},
-            {name="Join",       value="[Clique aqui]("..joinUrl..")",        inline=false},
-            {name="Job ID",     value="```"..jobId.."```",                   inline=false},
-        },
-        footer = {text = NOTIFIER_NAME.." v3 • "..os.date("%H:%M:%S")},
-    }
+local embed = {
+    title       = "🎯 "..getMutPfx(best.mutation)..best.name.." · "..fmtV(best.value).."/s",
+    description = "**Brainrots encontrados:**\n```"..listLines.."```\n\n🔗 **Join:** [Clique aqui]("..joinUrl..")"
+                ..(best.inDuel and "\n⚔️ **Dono em Duel!**" or ""),
+    color       = color,
+    thumbnail   = imageUrl and {url = imageUrl} or nil,
+    fields      = {
+        {name="Players",   value=tostring(#Players:GetPlayers()).."/8", inline=true},
+        {name="Owner",     value=tostring(best.ownerName),              inline=true},
+        {name="Total Gen", value="$"..fmtV(total).."/s",                inline=true},
+        {name="Job ID",    value="```"..jobId.."```",                   inline=false},
+    },
+    footer = {text = NOTIFIER_NAME.." v3 • "..os.date("%H:%M:%S")},
+}
 
-    local ok = httpPost(DISCORD_WEBHOOK, {content="", username=NOTIFIER_NAME, embeds={embed}})
-    if ok then
-        log(ICONS.discord, ("Webhook enviado! Melhor: %s %s | Total: $%s/s"):format(
-            best.name, genText, fmtV(total)))
-    else
-        log(ICONS.warn, "Falha ao enviar webhook")
+local ok = httpPost(DISCORD_WEBHOOK, {
+    content = "",
+    username = NOTIFIER_NAME,
+    embeds = {embed}
+})
+
+if ok then
+    log(ICONS.discord, ("Webhook enviado! Melhor: %s %s | Total: $%s/s"):format(
+        best.name, genText, fmtV(total)))
+else
+    log(ICONS.warn, "Falha ao enviar webhook")
     end
 end
 
